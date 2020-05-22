@@ -75,7 +75,7 @@ class TestClasificarIndices(unittest.TestCase):
         from elastica.rustilidades import seleccionar_indices_a_borrar
    
         indices = clasificar_indices(self.indices) 
-        resultado = seleccionar_indices_a_borrar(5, 65000, indices)
+        resultado = seleccionar_indices_a_borrar(5, 60000, indices)
         resultado.sort() 
         
         self.assertListEqual(['auditbeat-activo-2019.06.09', 'auditbeat-activo-2019.06.10', 'squid-activo-2019.06.29', 'squid-activo-2019.06.30', 'squidguard-activo-2019.05.08', 'squidguard-activo-2019.05.09'], resultado) 

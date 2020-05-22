@@ -186,3 +186,12 @@ if __name__ == "__main__":
         if nombre_indice_backup: 
             borrar_indice(args.endpoint, indice)
 
+
+    #        Apr 17 15:33:30 log elastica[14842] peticiones.shrinkear: Shrinkea: Esto es el error de parte del servidor {'error': 'index_not_found_exception: no such index', 'acknowledged': False}
+    #        Apr 17 15:33:30 log elastica[14842] esbackup.<module>: Pues que fallamos al shrinkear
+    #        Apr 17 15:33:30 log elastica[14842] esbackup.<module>: Pues que fallamos al mergear
+    #        Apr 17 15:33:30 log elastica[14842] peticiones.shrinkear: Shrinkea ('auditbeat-activo-2019.06.12', 5570)
+    #        Apr 17 15:33:30 log elastica[14842] peticiones.shrinkear: Shrinkea ('auditbeat-activo-2019.06.12', 5570): Conversion a sólo lectura
+    #        Apr 17 15:33:30 log elastica[14842] peticiones._peticionar: Peticionando: PUT http://127.0.0.1:9200/('auditbeat-activo-2019.06.12', 5570)/_settings
+    #        Apr 17 15:33:30 log elastica[14842] peticiones._peticionar: Peticionando: Error index_not_found_exception: no such index
+    #        Apr 17 15:33:30 log elastica[14842] peticiones.shrinkear: Shrinkea: Esto es el error de parte del servidor {'error': 'index_not_found_exception: no such index', 'acknowledged': False}

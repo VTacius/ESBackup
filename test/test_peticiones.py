@@ -29,17 +29,3 @@ class PeticionesGet (unittest.TestCase):
 
         self.assertEqual(respuesta, [''])
 
-    @requests_mock.Mocker()
-    def test_get_peticion_error(self, m):
-        from elastica import peticiones
-        contenido_error = {
-                'error': {
-                    'type': 'Tipo de error',
-                    'reason': 'Razón del error' 
-                    } 
-                } 
-        m.get(self.url, json=contenido_error, status_code=404)
-        
-        respuesta = peticiones._peticionar('get', self.url) 
-
-        self.assertFalse(respuesta)
