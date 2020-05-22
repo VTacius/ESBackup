@@ -1,0 +1,44 @@
+import logging
+
+from math import ceil
+from sys import stdout
+from logging.handlers import SysLogHandler
+
+def conversor_unidades(kilobytes):
+    sufijos = ['KB', 'MB', 'GB', 'TB']
+    r = counter = 0
+    while kilobytes > 1:
+        counter += 1
+        r, kilobytes = kilobytes, kilobytes/1024
+    
+    sufijo = sufijos[counter-1 if counter > 0 else 0]
+
+    return "{:.2f}{}".format(r, sufijo)
+    
+
+def configurar_log(salida='console', verbosidad=0):
+    log = logging.getLogger(__name__)
+    verbosidad = 4 if verbosidad > 4 else verbosidad
+    nivel = ['CRITICAL', 'ERROR', 'WARNING', 'INFO', 'DEBUG'][verbosidad]
+    formato = logging.Formatter('elastica[%(process)s] %(module)s.%(funcName)s: %(message)s')
+    
+    handler = None
+    if salida == 'syslog':
+        handler = SysLogHandler(address='/dev/log')
+    else:
+        handler = logging.StreamHandler(stdout)
+    
+    nivel_verbosidad = getattr(logging, nivel)
+    handler.setLevel(nivel_verbosidad)
+    handler.setFormatter(formato)
+
+    log = logging.getLogger('elastica')
+    
+    log.setLevel(nivel_verbosidad)
+    if not log.handlers:
+        log.addHandler(handler)
+    else:
+        h = log.handlers[0]
+        log.removeHandler(h)
+        log.addHandler(handler)
+    return log
