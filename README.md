@@ -6,7 +6,22 @@ Para usar este script como la herramienta de backup, basta con instalar y verifi
 # Instalacion
 Es manual
 
+Aunque parece que viene ya instalado en muchas distribuciones, el único paquete necesario para que esto funcione es
+
+```bash
+dnf install python3-requests-mock python3-requests
+```
+
+# Desarrollo.
+En Fedora, un par de paquetes son necesarios
+
+```bash
+dnf install python3-pytest python3-devel python3-mock python3-requests-mock 
+```
+
 # Test
-```sh
-pytest -v test/
+Usar a `pytest` como módulo nos evita muchos dolores de cabeza
+
+```bash
+python3 -m pytest test/
 ```

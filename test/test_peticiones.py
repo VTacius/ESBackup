@@ -5,12 +5,6 @@ import requests_mock
 
 from json import dumps
 
-import os
-import sys
-current_path = os.path.dirname(os.path.realpath(__file__))
-package_path = '/'.join(current_path.split('/')[:-1])
-sys.path.append(package_path)
-
 class PeticionesGet (unittest.TestCase):
 
     url = 'http://test.com'
