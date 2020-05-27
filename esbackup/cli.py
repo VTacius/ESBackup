@@ -8,67 +8,44 @@ from functools import reduce
 
 from argparse import ArgumentParser
 
-from elastica.utilidades import configurar_log
-from elastica.utilidades import conversor_unidades 
+from esbackup.utilidades import configurar_log
+from esbackup.utilidades import conversor_unidades 
 
-from elastica.almacenamiento import calcular_porcentaje_libre
-from elastica.almacenamiento import buscar_punto_montaje
-from elastica.almacenamiento import listar_dispositivos_montados
+from esbackup.almacenamiento import calcular_porcentaje_libre
+from esbackup.almacenamiento import listar_dispositivos_montados
 
-from elastica.peticiones import mergear
-from elastica.peticiones import shrinkear
-from elastica.peticiones import borrar_indice
-from elastica.peticiones import listar_indices
-from elastica.peticiones import habilitar_escritura_nodo
+from esbackup.peticiones import mergear
+from esbackup.peticiones import shrinkear
+from esbackup.peticiones import borrar_indice
+from esbackup.peticiones import listar_indices
+from esbackup.peticiones import habilitar_escritura_nodo
+
+from esbackup.esbackup import clasificar_indices
+from esbackup.esbackup import buscar_punto_montaje
+from esbackup.esbackup import seleccionar_indices_a_borrar
+from esbackup.esbackup import espacio_usado_indices
+from esbackup.esbackup import seleccionar_indices_a_respaldar
 
 # Este es el que usaremos en testing
 log = configurar_log(verbosidad=4)
 
-def separador(linea):
-    iname, tamanio = linea.split()
-    clave = iname.split('-')[0]
+def calcular_espacio_requerido(espacio_ultimos_indices, porcentaje_requerido, espacio_usado, espacio_libre):
+    # El sistema necesita tener 10% de espacio disponible, o elasticsearch entra en modo de solo-escritura
+    espacio_minimo_requerido = (espacio_usado + espacio_libre) * 0.10
+
+    espacio_estimado_para_nuevos_indices = espacio_ultimos_indices * (1 + porcentaje_requerido)
+
+    # ¿Cuál es el espacio requerido a liberar?
+    espacio_requerido = ceil(espacio_minimo_requerido + espacio_estimado_para_nuevos_indices)
+    if espacio_requerido >= espacio_libre:
+        espacio_requerido -= espacio_libre
+    else:
+        log.debug("Suficiente espacio libre {} para suplir lo requerido {}".format(espacio_libre, espacio_requerido))
+        espacio_requerido = 0
     
-    return clave, iname, int(tamanio)
+    return espacio_requerido
 
-
-def clasificar_indices(tabla):
-    indices = {}
-    for linea in tabla:
-        clave, iname, tamanio = separador(linea)
-        elemento = (iname, tamanio)
-        if clave in indices:
-            indices[clave].append(elemento)
-        else:
-            indices[clave] = [elemento]
-
-    return indices
-
-
-def seleccionar_indices_a_borrar(minimo_indices_requerido, espacio_libre_requerido, espacio_libre_sistema, indices):
-    libre = espacio_libre_sistema
-    indices_a_borrar= []
-    
-    while espacio_libre_requerido > libre:
-        ultimos_indices = [y[0][0] for x, y in indices.items() if len(y) > minimo_indices_requerido]
-
-        if len(ultimos_indices) == 0:
-            break
-       
-        indices_a_borrar += ultimos_indices
-        espacio_borrado = sum([y[0][1] for x, y in indices.items() if len(y) > minimo_indices_requerido])
-
-        # Quitamos los índices borrados de las listas correspondientes
-        indices = {x: y[1:] for x,y in indices.items()}
-        
-        ## ¿Cuánto espacio disponible tenemos ahora?
-        libre += espacio_borrado 
-   
-    log.info("Seleccionados {} indices a borrar, habrá {} de espacio libre en el sistema".format(len(indices_a_borrar), conversor_unidades(libre)))
-    log.debug(indices_a_borrar)
-    
-    return indices_a_borrar
-
-if __name__ == "__main__":
+def main():
     parser = ArgumentParser(description="Backup para indices de ElasticSearch")
     parser.add_argument('--verbose', '-v', default=2, action='count')
     parser.add_argument('--salida', '-s', default='console', choices=['console', 'syslog'])
@@ -91,41 +68,34 @@ if __name__ == "__main__":
     ### TODO: Falta algo bien importante. Si el servidor tiene menos de 10%, no dejara hacer nada de esto
 
     ###
-    ## I PARTE: Trabajamos el espacio disponible. Es prácticamente la parte más complicada de todo esto
+    ## I PARTE: Trabajamos para obtener el espacio disponible necesario para nuevos índices. 
     #
     
     # ¿En que partición se encuentra ubicada la instalación de elasticsearch?
     montajes = listar_dispositivos_montados()
     particion_de_montaje = buscar_punto_montaje('/var/lib/elasticsearch/', montajes)
     usado, libre = calcular_porcentaje_libre(particion_de_montaje)
-    
-    # El sistema necesita tener 10% de espacio disponible, o elasticsearch entra en modo de solo-escritura
-    espacio_total = usado + libre
-    espacio_minimo_requerido = espacio_total * 0.10
-    
+   
     # Listamos los indíces y los clasificamos por sus nombres
     lista_indices_activos = listar_indices(args.endpoint, indice=args.patron, claves='index,store.size', orden='index')
     if len(lista_indices_activos) == 0:
         log.error('No se encontraron indices con el patron dado: {}. Adiós'.format(args.patron))
         exit(1)
     tabla_indices_activos = clasificar_indices(lista_indices_activos)
-   
-    # ¿Cuánto es el espacio usado por los últimos 3 índices activos
-    promedio_tamanio = lambda lista: sum([x[1] for x in lista]) / len(lista)
-    gspacio_ultimos_indices_activos = ceil(sum([promedio_tamanio(y[:3]) for x, y in tabla_indices_activos.items()])) 
     
-    # ¿Cuál es el espacio requerido 
-    espacio_requerido = ceil((espacio_ultimos_indices_activos * args.porcentaje_requerido) + espacio_minimo_requerido) 
+    # ¿Cuánto es la suma de los espacios promedios usado por los últimos 3 índices activos de cada tipo disponible?
+    espacio_ultimos_indices_activos = espacio_usado_indices(tabla_indices_activos, 3)
+    
+    # ¿Cuánto espacio necesito liberar?
+    espacio_requerido = calcular_espacio_requerido(espacio_ultimos_indices_activos, args.porcentaje_requerido, usado, libre)
     
     log.info('Espacio disponible: {}. Espacio requerido: {}'.format(conversor_unidades(libre), conversor_unidades(espacio_requerido)))
-    log.debug('{} de uso promedio para los índices'.format(conversor_unidades(espacio_ultimos_indices_activos)))
-    log.debug('{} el 11% de espacio requerido como libre en disco por parte de elasticsearch'.format(conversor_unidades(espacio_minimo_requerido)))
     
     # Seleccionamos los indices backup a borrar, a ver que onda
     lista_indices_backup = listar_indices(args.endpoint, indice='*-backup-*', claves='index,store.size', orden='index')
     tabla_indices_backup = clasificar_indices(lista_indices_backup)
-    lista_indices_borrables = seleccionar_indices_a_borrar(args.minimo_indices_backup_requeridos, espacio_requerido, libre, tabla_indices_backup)
-    
+    lista_indices_borrables = seleccionar_indices_a_borrar(args.minimo_indices_backup_requeridos, espacio_requerido, tabla_indices_backup)
+   
     # Borramos los índices y guardamos los resultados
     resultado = [borrar_indice(args.endpoint, indice) for indice in lista_indices_borrables]
     errores = [indice for indice in resultado if not indice['acknowledged']]
@@ -164,7 +134,7 @@ if __name__ == "__main__":
     ###
     ## III PARTE: Buscamos los índices sobre los cuales vamos a trabajar 
     #
-    indices_a_backupear = reduce(lambda resultado, actual: resultado + actual[1][:-args.minimo_indices_activo_requeridos], tabla_indices_activos.items(), [])
+    indices_a_backupear = seleccionar_indices_a_respaldar(2, tabla_indices_activos)
     
     ###
     ## IV PARTE: Operamos sobre los índices backupeables
@@ -186,12 +156,5 @@ if __name__ == "__main__":
         if nombre_indice_backup: 
             borrar_indice(args.endpoint, indice)
 
-
-    #        Apr 17 15:33:30 log elastica[14842] peticiones.shrinkear: Shrinkea: Esto es el error de parte del servidor {'error': 'index_not_found_exception: no such index', 'acknowledged': False}
-    #        Apr 17 15:33:30 log elastica[14842] esbackup.<module>: Pues que fallamos al shrinkear
-    #        Apr 17 15:33:30 log elastica[14842] esbackup.<module>: Pues que fallamos al mergear
-    #        Apr 17 15:33:30 log elastica[14842] peticiones.shrinkear: Shrinkea ('auditbeat-activo-2019.06.12', 5570)
-    #        Apr 17 15:33:30 log elastica[14842] peticiones.shrinkear: Shrinkea ('auditbeat-activo-2019.06.12', 5570): Conversion a sólo lectura
-    #        Apr 17 15:33:30 log elastica[14842] peticiones._peticionar: Peticionando: PUT http://127.0.0.1:9200/('auditbeat-activo-2019.06.12', 5570)/_settings
-    #        Apr 17 15:33:30 log elastica[14842] peticiones._peticionar: Peticionando: Error index_not_found_exception: no such index
-    #        Apr 17 15:33:30 log elastica[14842] peticiones.shrinkear: Shrinkea: Esto es el error de parte del servidor {'error': 'index_not_found_exception: no such index', 'acknowledged': False}
+if __name__ == "__main__":
+    main()

@@ -10,7 +10,7 @@ class obtieneMontajeDirectorio(unittest.TestCase):
     esquema_particion_avanzado = {'/': '/dev/xvda2', '/home': '/dev/xvda3', '/var/': '/dev/xvdb1'}
 
     def test_montaje_por_defecto(self):
-        from elastica.rustilidades import buscar_punto_montaje
+        from esbackup.esbackup import buscar_punto_montaje
         
         esquema_particion = {'/': '/dev/xvda2', '/home': '/dev/xvda3'}
         
@@ -19,7 +19,7 @@ class obtieneMontajeDirectorio(unittest.TestCase):
         self.assertEqual(respuesta, '/')
     
     def test_montaje_avanzado(self):
-        from elastica.rustilidades import buscar_punto_montaje
+        from esbackup.esbackup import buscar_punto_montaje
         
         esquema_particion = {'/': '/dev/xvda2', '/home': '/dev/xvda3', '/var': '/dev/xvdb1'}
 

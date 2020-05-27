@@ -7,6 +7,9 @@
 [._]ss[a-gi-z]
 [._]sw[a-p]
 
+# Por Rust
+*.lock
+
 # Session
 Session.vim
 Sessionx.vim
@@ -25,8 +28,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-## C extensions
-#*.so
+# C extensions
+*.so
 
 # Distribution / packaging
 .Python

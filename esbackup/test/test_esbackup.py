@@ -25,15 +25,49 @@ class TestClasificarIndices(unittest.TestCase):
         'squidguard-activo-2019.05.14    7820', 
     ]
     
+    def test_espacio_requerido(self):
+        from esbackup.cli import calcular_espacio_requerido
+        resultado = calcular_espacio_requerido(1000, 0.2, 2500, 500) 
+
+        self.assertEqual(resultado, 1000)
+    
+    def test_espacio_requerido_libre_ayuda(self):
+        from esbackup.cli import calcular_espacio_requerido
+        resultado = calcular_espacio_requerido(1000, 0.2, 1500, 1000) 
+
+        self.assertEqual(resultado, 450)
+    
+    def test_espacio_requerido_libre_mayor(self):
+        from esbackup.cli import calcular_espacio_requerido
+        resultado = calcular_espacio_requerido(1000, 0.2, 500, 2500) 
+
+        self.assertEqual(resultado, 0)
+
+    def test_espacio_usado_indices(self):
+        from esbackup.esbackup import espacio_usado_indices 
+        from esbackup.esbackup import clasificar_indices
+        tabla = clasificar_indices(self.indices)
+        resultado = espacio_usado_indices(tabla, 1)
+
+        self.assertEqual(2000, resultado)
+    
+    def test_espacio_usado_indices(self):
+        from esbackup.esbackup import espacio_usado_indices 
+        from esbackup.esbackup import clasificar_indices
+        tabla = clasificar_indices(self.indices)
+        resultado = espacio_usado_indices(tabla, 2)
+
+        self.assertEqual(20000, resultado)
+
     def test_clasificar_indices(self):
-        from elastica.rustilidades import clasificar_indices
+        from esbackup.esbackup import clasificar_indices
         resultado = clasificar_indices(self.indices)
         resultado =  list(resultado.keys())
         resultado.sort()
         self.assertListEqual(['auditbeat', 'squid', 'squidguard'], resultado)
     
     def test_clasificar_indices_tipo(self):
-        from elastica.rustilidades import clasificar_indices
+        from esbackup.esbackup import clasificar_indices
         
         resultado = clasificar_indices(self.indices)
         resultado = resultado['auditbeat'][0]
@@ -41,7 +75,7 @@ class TestClasificarIndices(unittest.TestCase):
         self.assertTrue(isinstance(resultado, tuple))
     
     def test_clasificar_indices_contenido(self):
-        from elastica.rustilidades import clasificar_indices
+        from esbackup.esbackup import clasificar_indices
         
         resultado = clasificar_indices(self.indices)
         resultado = resultado['auditbeat'][0]
@@ -49,8 +83,8 @@ class TestClasificarIndices(unittest.TestCase):
         self.assertEqual(('auditbeat-activo-2019.06.09', 5000), resultado)
    
     def test_seleccionar_indices_a_borrar(self):
-        from elastica.rustilidades import clasificar_indices
-        from elastica.rustilidades import seleccionar_indices_a_borrar
+        from esbackup.esbackup import clasificar_indices
+        from esbackup.esbackup import seleccionar_indices_a_borrar
    
         indices = clasificar_indices(self.indices) 
         resultado = seleccionar_indices_a_borrar(2, 20000, indices)
@@ -59,8 +93,8 @@ class TestClasificarIndices(unittest.TestCase):
         self.assertListEqual(['auditbeat-activo-2019.06.09', 'squid-activo-2019.06.29','squidguard-activo-2019.05.08'], resultado) 
     
     def test_seleccionar_indices_a_borrar_caso2(self):
-        from elastica.rustilidades import clasificar_indices
-        from elastica.rustilidades import seleccionar_indices_a_borrar
+        from esbackup.esbackup import clasificar_indices
+        from esbackup.esbackup import seleccionar_indices_a_borrar
    
         indices = clasificar_indices(self.indices) 
         resultado = seleccionar_indices_a_borrar(2, 40000, indices)
@@ -71,8 +105,8 @@ class TestClasificarIndices(unittest.TestCase):
                 resultado) 
     
     def test_seleccionar_indices_a_borrar_limite(self):
-        from elastica.rustilidades import clasificar_indices
-        from elastica.rustilidades import seleccionar_indices_a_borrar
+        from esbackup.esbackup import clasificar_indices
+        from esbackup.esbackup import seleccionar_indices_a_borrar
    
         indices = clasificar_indices(self.indices) 
         resultado = seleccionar_indices_a_borrar(5, 60000, indices)

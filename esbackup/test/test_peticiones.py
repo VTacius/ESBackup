@@ -11,7 +11,7 @@ class PeticionesGet (unittest.TestCase):
     
     @requests_mock.Mocker()
     def test_get_peticiones(self, m):
-        from elastica import peticiones 
+        from esbackup import peticiones 
         
         m.get(self.url, json={})
         
@@ -21,7 +21,7 @@ class PeticionesGet (unittest.TestCase):
     
     @requests_mock.Mocker()
     def test_get_peticion_json(self, m):
-        from elastica import peticiones
+        from esbackup import peticiones
 
         m.get(self.url, text='')
 
