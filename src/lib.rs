@@ -6,10 +6,13 @@ use std::collections::HashMap;
 #[pyfunction]
 #[text_signature = "(tabla, muestra)"]
 fn espacio_usado_indices(tabla: HashMap<&str, Vec<(&str, u128)>>, muestra: usize) -> PyResult<u128> {
-    let resultado = tabla
+    let resultado: u128 = tabla
         .values()
-        .flat_map(|x| x[..muestra].to_vec())
-        .fold(0, |a, x| a + x.1);
+        .map(|x| {
+            x.iter().take(muestra).map(|x|x.1)
+        })
+        .flatten()
+        .sum();
 
     Ok(resultado / muestra as u128)
 }
@@ -159,6 +162,17 @@ mod test {
         indices.insert("squidguard", vec!(("squidguard-05.08", 600), ("squidguard-05.09", 600), ("squidguard-05.10", 800), ("squidguard-05.11", 700)));
 
         assert_eq!(2000, espacio_usado_indices(indices, 2).unwrap())
+    }
+
+    /// Es decir: Pedimos tres indices, pero solo tenemos dos.
+    #[test]
+    fn test_espacio_usado_indices_insuficientes(){
+        let mut indices = HashMap::new();
+        indices.insert("squid", vec!(("squid-06.29", 500), ("squid-06.30", 800)));
+        indices.insert("auditbeat", vec!(("auditbeat-06.09", 900), ("auditbeat-06.10", 600)));
+        indices.insert("squidguard", vec!(("squidguard-05.08", 600), ("squidguard-05.09", 500)));
+
+        assert_eq!(1300, espacio_usado_indices(indices, 3).unwrap())
     }
 
     #[test]
