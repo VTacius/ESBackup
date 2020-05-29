@@ -19,10 +19,16 @@ jobs:
     - uses: actions/checkout@v2
       with:
         ref: '0.9.4'
+    
     # Mi nueva acción, su construcción es inminente
-    - uses:  VTacius/action-setuptool-rust@v0.1.7
+    - name: Construcción del paquete
+      id: building  
+      uses:  VTacius/action-setuptool-rust@v0.7.0
+    
+    # Ponemos a disposición el artefacto, paso previo para subir el asset a un nuevo release
     - name: Subir el nuevo artefacto
+      id: uploading
       uses: actions/upload-artifact@v1
       with:
         name: Cargo.toml
-        path: Cargo.toml
+        path: ${{ steps.building.outputs.fichero }}
