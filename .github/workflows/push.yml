@@ -20,4 +20,4 @@ jobs:
       with:
         ref: '0.9.4'
     # Mi nueva acción, su construcción es inminente
-    - uses:  VTacius/action-setuptool-rust@v0.1.5
+    - uses:  VTacius/action-setuptool-rust@v0.1.6
