@@ -20,4 +20,9 @@ jobs:
       with:
         ref: '0.9.4'
     # Mi nueva acción, su construcción es inminente
-    - uses:  VTacius/action-setuptool-rust@v0.1.6
+    - uses:  VTacius/action-setuptool-rust@v0.1.7
+    - name: Subir el nuevo artefacto
+      uses: actions/upload-artifact@v1
+      with:
+        name: Cargo.toml
+        path: Cargo.toml
