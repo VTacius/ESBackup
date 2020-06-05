@@ -7,6 +7,9 @@
 [._]ss[a-gi-z]
 [._]sw[a-p]
 
+# Por Rust
+*.lock
+
 # Session
 Session.vim
 Sessionx.vim

@@ -1,0 +1,21 @@
+[package]
+name = "esbackup"
+version = "1.0.0"
+authors = ["Alexander Ortiz <vtacius@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "esbackup"
+crate-type = ["cdylib"]
+
+[package.metadata.maturin]
+requires-python = ">=3.5"
+scripts = {esbackup = "esbackup.cli:main"}
+
+[dependencies]
+pyo3 = { version = "0.10.1"}
+
+[features]
+extension-module = ["pyo3/extension-module"]
+default = ["extension-module"]
+
