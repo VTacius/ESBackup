@@ -17,7 +17,7 @@ dnf install python3-requests
 apt install python3-requests
 
 # El paquete propiamente se instala asi:
-tar xzvf dist/esbackup-1.0.linux-x86_64.tar.gz --strip-components=7 -C /usr/local/
+tar xzvf esbackup-1.0.0.linux-x86_64.tar.gz -C /
 ```
 
 ## Desarrollo.

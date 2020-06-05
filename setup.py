@@ -3,7 +3,7 @@ from setuptools_rust import Binding, RustExtension
 
 setup(
     name='esbackup',
-    version='1.0.0',
+    version='0.9.45',
     description='Backup de indices en Elasticsearch 6.x',
     keywords='backup python rust',
     author='Alexander Ortíz',
