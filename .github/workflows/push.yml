@@ -23,12 +23,12 @@ jobs:
     # Mi nueva acción, su construcción es inminente
     - name: Construcción del paquete
       id: building  
-      uses:  VTacius/action-setuptool-rust@v0.7.0
+      uses:  VTacius/action-setuptool-rust@v0.8.0
     
     # Ponemos a disposición el artefacto, paso previo para subir el asset a un nuevo release
     - name: Subir el nuevo artefacto
       id: uploading
       uses: actions/upload-artifact@v1
       with:
-        name: Cargo.toml
-        path: ${{ steps.building.outputs.fichero }}
+        name: ${{ steps.building.outputs.nombre_paquete }}
+        path: ${{ steps.building.outputs.ruta_paquete }}
